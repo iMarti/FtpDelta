@@ -1,6 +1,6 @@
 # FtpDelta
 
-A command-line tool that efficiently syncs local folders to remote FTP servers by uploading only new or modified files based on size and modification date comparison.
+A TypeScript command-line tool that efficiently syncs local folders to remote FTP servers by uploading only new or modified files based on size and modification date comparison.
 
 ## Features
 
@@ -9,6 +9,8 @@ A command-line tool that efficiently syncs local folders to remote FTP servers b
 - **Resilient**: Errors are logged without stopping the sync; restarting will skip already-uploaded files
 - **Dry Run**: Preview what would be uploaded without making changes
 - **Progress Tracking**: See real-time upload progress and detailed summary
+- **Type Safe**: Written in TypeScript with strict type checking
+- **Modern Modules**: Uses ES6 module system
 
 ## Installation
 
@@ -17,7 +19,13 @@ A command-line tool that efficiently syncs local folders to remote FTP servers b
 
 ```bash
 npm install
+```Build the TypeScript code:
+
+```bash
+npm run build
 ```
+
+4. 
 
 3. Copy the example environment file and configure it:
 
@@ -42,6 +50,13 @@ REMOTE_DIR=/public_html    # Remote FTP directory
 
 ```bash
 npm start
+```
+
+### Development (with TypeScript):
+
+```bash
+npm run build   # Compile TypeScript to JavaScript
+npm run dev     # Run directly with ts-node (requires ts-node installed)
 ```
 
 Or if installed globally/linked:
@@ -102,6 +117,13 @@ ftpdelta --dry-run --verbose
 
 If the sync is interrupted or encounters errors, simply restart the tool. Files that were successfully uploaded will have newer modification dates on the remote server and will be automatically skipped, ensuring only remaining files are processed.
 
+- **TypeScript**: For type safety and modern JavaScript features
+
+## Dev Dependencies
+
+- **@types/fs-extra**: TypeScript types for fs-extra
+- **@types/node**: TypeScript types for Node.js
+- **typescript**: TypeScript compiler
 ## Dependencies
 
 - **basic-ftp**: Modern FTP client with Promise support

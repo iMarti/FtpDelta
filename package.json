@@ -2,12 +2,15 @@
 	"name": "ftpdelta",
 	"version": "1.0.0",
 	"description": "CLI tool to sync local folders to FTP by uploading only new or modified files",
-	"main": "src/sync.js",
+	"type": "module",
+	"main": "dist/sync.js",
 	"bin": {
-		"ftpdelta": "./bin/ftpdelta.js"
+		"ftpdelta": "./dist/bin/ftpdelta.js"
 	},
 	"scripts": {
-		"start": "node bin/ftpdelta.js",
+		"build": "tsc",
+		"start": "node dist/bin/ftpdelta.js",
+		"dev": "node --loader ts-node/esm dist/bin/ftpdelta.ts",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"keywords": [
@@ -26,5 +29,10 @@
 		"dotenv": "^16.4.5",
 		"fs-extra": "^11.2.0",
 		"glob": "^10.3.10"
+	},
+	"devDependencies": {
+		"@types/fs-extra": "^11.0.4",
+		"@types/node": "^20.10.6",
+		"typescript": "^5.3.3"
 	}
 }
