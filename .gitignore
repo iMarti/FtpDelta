@@ -5,8 +5,8 @@ node_modules/
 dist/
 *.tsbuildinfo
 
-# Environment files
-.env
+# Configuration files with credentials
+ftpdelta.config.js
 
 # Logs
 *.log

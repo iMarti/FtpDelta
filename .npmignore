@@ -1,0 +1,26 @@
+# Source files (only publish compiled dist/)
+src/
+tsconfig.json
+*.ts
+
+# Development files
+ftpdelta.config.js
+ftpdelta.config.example.js
+USAGE.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# CI/CD
+.github/

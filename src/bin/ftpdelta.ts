@@ -1,64 +1,104 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import dotenv from 'dotenv';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
+import fse from 'fs-extra';
 import { syncToFtp } from '../sync.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * Config interface for ftpdelta.config.js
+ */
+export interface FtpDeltaConfig {
+	host: string;
+	user: string;
+	password: string;
+	secure?: boolean;
+	localDir: string;
+	remoteDir: string;
+}
+
+/**
+ * Load config from a JavaScript file
+ */
+async function loadConfig(configPath: string): Promise<FtpDeltaConfig> {
+	const absolutePath = path.resolve(process.cwd(), configPath);
+	
+	// Check if file exists
+	if (!await fse.pathExists(absolutePath)) {
+		throw new Error(`Config file not found: ${configPath}\nCreate a ftpdelta.config.js file or specify a different config with --config`);
+	}
+
+	try {
+		// Import the config file as an ES module
+		const configUrl = pathToFileURL(absolutePath).href;
+		const configModule = await import(configUrl);
+		const config = configModule.default || configModule;
+
+		// Validate required fields
+		const required = ['host', 'user', 'password', 'localDir', 'remoteDir'] as const;
+		const missing = required.filter(key => !config[key]);
+
+		if (missing.length > 0) {
+			throw new Error(`Missing required config fields: ${missing.join(', ')}`);
+		}
+
+		return config;
+	} catch (err) {
+		if (err instanceof Error && err.message.includes('Missing required')) {
+			throw err;
+		}
+		throw new Error(`Failed to load config from ${configPath}: ${err instanceof Error ? err.message : String(err)}`);
+	}
+}
+
 const program = new Command();
 
 program
-    .name('ftpdelta')
-    .description('Sync local folders to FTP by uploading only new or modified files')
-    .version('1.0.0')
-    .option('-c, --config <path>', 'Path to .env config file', '.env')
-    .option('-d, --dry-run', 'Preview changes without uploading')
-    .option('-v, --verbose', 'Show detailed logging')
-    .parse(process.argv);
+	.name('ftpdelta')
+	.description('Sync local folders to FTP by uploading only new or modified files')
+	.version('1.0.0')
+	.option('-c, --config <path>', 'Path to config file', 'ftpdelta.config.js')
+	.option('-d, --dry-run', 'Preview changes without uploading')
+	.option('-v, --verbose', 'Show detailed logging')
+	.parse(process.argv);
 
 const options = program.opts<{
-    config: string;
-    dryRun: boolean;
-    verbose: boolean;
+	config: string;
+	dryRun: boolean;
+	verbose: boolean;
 }>();
 
-// Load environment variables from specified config file
-const configPath = path.resolve(process.cwd(), options.config);
-dotenv.config({ path: configPath });
+// Load config file
+try {
+	const config = await loadConfig(options.config);
 
-// Validate required environment variables
-const required = ['FTP_HOST', 'FTP_USER', 'FTP_PASS', 'LOCAL_DIR', 'REMOTE_DIR'] as const;
-const missing = required.filter(key => !process.env[key]);
+	// Run the sync
+	const ftpConfig = {
+		host: config.host,
+		user: config.user,
+		password: config.password,
+		secure: config.secure || false,
+		localDir: config.localDir,
+		remoteDir: config.remoteDir,
+		dryRun: options.dryRun,
+		verbose: options.verbose
+	};
 
-if (missing.length > 0) {
-    console.error(`Error: Missing required environment variables: ${missing.join(', ')}`);
-    console.error(`Please create a ${options.config} file with these variables.`);
-    process.exit(1);
+	syncToFtp(ftpConfig)
+		.then(stats => {
+			process.exit(stats.errorCount > 0 ? 1 : 0);
+		})
+		.catch(err => {
+			const errorMessage = err instanceof Error ? err.message : String(err);
+			console.error('Sync failed:', errorMessage);
+			process.exit(1);
+		});
+} catch (err) {
+	const errorMessage = err instanceof Error ? err.message : String(err);
+	console.error('Config error:', errorMessage);
+	process.exit(1);
 }
-
-// Type-safe environment variable access
-const ftpConfig = {
-    host: process.env.FTP_HOST!,
-    user: process.env.FTP_USER!,
-    password: process.env.FTP_PASS!,
-    secure: process.env.FTP_SECURE === 'true',
-    localDir: process.env.LOCAL_DIR!,
-    remoteDir: process.env.REMOTE_DIR!,
-    dryRun: options.dryRun,
-    verbose: options.verbose
-};
-
-// Run the sync
-syncToFtp(ftpConfig)
-    .then(stats => {
-        process.exit(stats.errorCount > 0 ? 1 : 0);
-    })
-    .catch(err => {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        console.error('Sync failed:', errorMessage);
-        process.exit(1);
-    });

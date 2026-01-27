@@ -14,95 +14,140 @@ A TypeScript command-line tool that efficiently syncs local folders to remote FT
 
 ## Installation
 
-1. Clone or download this repository
+### As a Dev Dependency (Recommended)
+
+Install from GitHub:
+
+```bash
+npm install --save-dev github:iMarti/FtpDelta
+```
+
+Or from npm (if published):
+
+```bash
+npm install --save-dev ftpdelta
+```
+
+### For Local Development
+
+1. Clone this repository
 2. Install dependencies:
 
 ```bash
 npm install
-```Build the TypeScript code:
+```
+
+3. Build the TypeScript code:
 
 ```bash
 npm run build
 ```
 
-4. 
+## Configuration
 
-3. Copy the example environment file and configure it:
+Create a `ftpdelta.config.js` file in your project root:
 
-```bash
-cp .env.example .env
+```javascript
+export default {
+	host: 'ftp.yourserver.com',
+	user: 'username',
+	password: 'password',
+	secure: false,           // Set to true for FTPS
+	localDir: './dist',      // Path to local folder
+	remoteDir: '/public_html' // Remote FTP directory
+};
 ```
 
-4. Edit `.env` with your FTP credentials and directories:
+**Important**: Add `ftpdelta.config.js` to your `.gitignore` to keep credentials secure!
 
-```env
-FTP_HOST=ftp.example.com
-FTP_USER=your_username
-FTP_PASS=your_password
-FTP_SECURE=false           # Set to 'true' for FTPS
-LOCAL_DIR=./local          # Path to local folder
-REMOTE_DIR=/public_html    # Remote FTP directory
+```
+# .gitignore
+ftpdelta.config.js
 ```
 
 ## Usage
 
-### Basic sync:
+### When Installed as Dev Dependency
 
-```bash
-npm start
+Add scripts to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "deploy": "ftpdelta",
+    "deploy:dry": "ftpdelta --dry-run",
+    "deploy:verbose": "ftpdelta --verbose"
+  }
+}
 ```
 
-### Development (with TypeScript):
+Then run:
 
 ```bash
-npm run build   # Compile TypeScript to JavaScript
-npm run dev     # Run directly with ts-node (requires ts-node installed)
+npm run deploy         # Deploy to FTP
+npm run deploy:dry     # Preview without uploading
+npm run deploy:verbose # Deploy with detailed logs
 ```
 
-Or if installed globally/linked:
+Or use `npx` directly:
 
 ```bash
-ftpdelta
+npx ftpdelta --dry-run
+npx ftpdelta --verbose
+npx ftpdelta --config ftpdelta.config.prod.js
 ```
 
-### Command-line options:
+### Testing Locally During Development
+
+When developing FtpDelta itself, use the following workflow:
+
+1. **Build the TypeScript code:**
+
+```bash
+npm run build
+```
+
+2. **Create a test config file** in the project root:
+
+```javascript
+// ftpdelta.config.js
+export default {
+	host: 'your-test-ftp-server.com',
+	user: 'testuser',
+	password: 'testpass',
+	secure: false,
+	localDir: './test-files',  // Create a test folder with sample files
+	remoteDir: '/test-upload'
+};
+```
+
+3. **Run with npm start** (uses the compiled code from `dist/`):
+
+```bash
+npm start                  # Run sync
+npm start -- --dry-run     # Preview without uploading
+npm start -- --verbose     # Detailed logging
+npm start -- --config ftpdelta.config.test.js  # Custom config
+```
+
+**Note:** The `--` is required to pass arguments through npm to the underlying command.
+
+### Command-line Options
 
 ```bash
 ftpdelta [options]
 
 Options:
-  -c, --config <path>  Path to .env config file (default: ".env")
+  -c, --config <path>  Path to config file (default: "ftpdelta.config.js")
   -d, --dry-run        Preview changes without uploading
   -v, --verbose        Show detailed logging
   -h, --help           Display help information
   -V, --version        Display version number
 ```
 
-### Examples:
-
-**Preview what would be uploaded:**
-```bash
-ftpdelta --dry-run
-```
-
-**Use a different config file:**
-```bash
-ftpdelta --config .env.production
-```
-
-**Verbose output with detailed logs:**
-```bash
-ftpdelta --verbose
-```
-
-**Combine options:**
-```bash
-ftpdelta --dry-run --verbose
-```
-
 ## How It Works
 
-1. **Connects** to the FTP server using credentials from `.env`
+1. **Connects** to the FTP server using credentials from `ftpdelta.config.js`
 2. **Scans** the local directory recursively for all files
 3. **Compares** each local file with its remote counterpart:
    - If remote file doesn't exist → **upload**
@@ -117,20 +162,18 @@ ftpdelta --dry-run --verbose
 
 If the sync is interrupted or encounters errors, simply restart the tool. Files that were successfully uploaded will have newer modification dates on the remote server and will be automatically skipped, ensuring only remaining files are processed.
 
-- **TypeScript**: For type safety and modern JavaScript features
-
-## Dev Dependencies
-
-- **@types/fs-extra**: TypeScript types for fs-extra
-- **@types/node**: TypeScript types for Node.js
-- **typescript**: TypeScript compiler
 ## Dependencies
 
 - **basic-ftp**: Modern FTP client with Promise support
 - **glob**: Pattern matching for recursive file listing
 - **fs-extra**: Enhanced file system utilities
 - **commander**: CLI argument parsing
-- **dotenv**: Environment variable management
+
+## Dev Dependencies
+
+- **@types/fs-extra**: TypeScript types for fs-extra
+- **@types/node**: TypeScript types for Node.js
+- **typescript**: TypeScript compiler
 
 ## License
 
