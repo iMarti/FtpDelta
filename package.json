@@ -1,6 +1,6 @@
 {
 	"name": "ftpdelta",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "CLI tool to sync local folders to FTP by uploading only new or modified files",
 	"type": "module",
 	"main": "dist/sync.js",
